@@ -4,10 +4,9 @@ import numpy as np
 import sys
 import tensorflow as tf
 import os
-from threading import Thread
 from datetime import datetime
 import cv2
-from utils import label_map_util
+from handtracking.utils import label_map_util
 from collections import defaultdict
 
 
@@ -17,11 +16,12 @@ sys.path.append("..")
 # score threshold for showing bounding boxes.
 _score_thresh = 0.27
 
-MODEL_NAME = 'hand_inference_graph'
+MODEL_NAME = 'handtracking/hand_inference_graph'
 # Path to frozen detection graph. This is the actual model that is used for the object detection.
 PATH_TO_CKPT = MODEL_NAME + '/frozen_inference_graph.pb'
 # List of the strings that is used to add correct label for each box.
 PATH_TO_LABELS = os.path.join(MODEL_NAME, 'hand_label_map.pbtxt')
+print(PATH_TO_LABELS)
 
 NUM_CLASSES = 1
 # load label map
@@ -89,47 +89,3 @@ def detect_objects(image_np, detection_graph, sess):
             detection_classes, num_detections],
         feed_dict={image_tensor: image_np_expanded})
     return np.squeeze(boxes), np.squeeze(scores)
-
-
-# Code to thread reading camera input.
-# Source : Adrian Rosebrock
-# https://www.pyimagesearch.com/2017/02/06/faster-video-file-fps-with-cv2-videocapture-and-opencv/
-class WebcamVideoStream:
-    def __init__(self, src, width, height):
-        # initialize the video camera stream and read the first frame
-        # from the stream
-        self.stream = cv2.VideoCapture(src)
-        self.stream.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-        self.stream.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
-        (self.grabbed, self.frame) = self.stream.read()
-
-        # initialize the variable used to indicate if the thread should
-        # be stopped
-        self.stopped = False
-
-    def start(self):
-        # start the thread to read frames from the video stream
-        Thread(target=self.update, args=()).start()
-        return self
-
-    def update(self):
-        # keep looping infinitely until the thread is stopped
-        while True:
-            # if the thread indicator variable is set, stop the thread
-            if self.stopped:
-                return
-
-            # otherwise, read the next frame from the stream
-            (self.grabbed, self.frame) = self.stream.read()
-
-    def read(self):
-        # return the frame most recently read
-        return self.frame
-
-    def size(self):
-        # return size of the capture device
-        return self.stream.get(3), self.stream.get(4)
-
-    def stop(self):
-        # indicate that the thread should be stopped
-        self.stopped = True
